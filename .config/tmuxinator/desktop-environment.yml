@@ -1,0 +1,53 @@
+attach: false
+name: environment-dashboard
+on_project_exit: tmux -S $STEMN_TMUX/.tmux.sock select-pane -t environment-dashboard:1.3
+on_project_first_start: tmux -S $STEMN_TMUX/.tmux.sock set-environment -g STEMN_TMUX_SESSION_ID $(date +%s)
+pre_window: export DOCKER_HOST=unix:///var/run/docker.sock; clear
+root: /stemn/stemn-backend/infrastructure/development-environment
+socket_path: $STEMN_TMUX/.tmux.sock
+
+windows:
+  - terminal:
+      layout: tiled
+      panes:
+        - yarn logs
+        - yarn ctop
+        - cd ../..; clear; cat -p ~/.motd; tree -d -L 1 .
+  - jest:
+      layout: main-vertical
+      panes:
+        - yarn tmux:test:watch:attach
+        - yarn logs:jest
+        - yarn start:mongo:shell
+  - pipelines:
+      layout: even-vertical
+      panes:
+        - yarn ctop:pipelines
+        - yarn logs:pipelines:server
+        - yarn logs:pipelines:containers
+  - continuous-integration:
+      layout: tiled
+      panes:
+        - yarn logs:abstruse
+        - yarn ctop:abstruse
+        - yarn logs:abstruse:containers
+        - yarn htop
+  - ingress:
+      layout: tiled
+      panes:
+        - yarn logs:ingress
+  - frontend:
+      layout: even-horizontal
+      panes:
+        - yarn tmux:build:frontend:website:attach
+        - yarn tmux:build:frontend:desktop:electron:attach
+        - yarn tmux:build:frontend:desktop:renderer:attach
+  - storage:
+      layout: even-vertical
+      panes:
+        - yarn logs:mongodb
+        - yarn logs:redis
+  - communication:
+      layout: tiled
+      panes:
+        - yarn tmux:weechat:attach
